@@ -40,23 +40,48 @@ void loop() {
   pixels.clear(); // Set all pixel colors to 'off'
 
   time = (float)millis() / 1000.;
+
+  float seq_time = 15;  // シーケンス全体の時間
+  // %使いたいがためにint化
+  if(int(time * 1000) % int(seq_time * 1000) < int(5 * 1000)) {
+    g = -9.8 * 30;
+  } else if(int(time * 1000) % int(seq_time * 1000) < int(5.2 * 1000)) {
+    g = 9.8 * 30;
+  } else if(int(time * 1000) % int(seq_time * 1000) < int(5.4 * 1000)) {
+    g = -9.8 * 20;
+  } else {
+    float dist_from_center_nomralized = (pos - (ceil_pos / 2)) / (ceil_pos / 2);
+    g = 9.8 * 6 * -dist_from_center_nomralized;
+    g += (sin(time * .9) + cos(time * .95)) * 9.8 * 2;  // 収束しないようにsinで適当に揺らし続ける
+  }
+
   simulate();
 
   for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
-    if(
-      (float)i < ceil(pos + body_size / 2) &&
-      (float)i > floor(pos - body_size / 2)
-    ) pixels.setPixelColor(i, pixels.Color(255, 255, 255));
+    float color[3] = {0, 0, 0};
+    float dist = abs(pos - (float)i);
+    
+    float fade_max = body_size/2;
+    float fade_min = body_size/2 + 2;
+    float a_max = 255;
+    float a_min = 0;
+    float a = ((a_max - a_min) / (fade_max - fade_min)) * dist + (fade_max * a_min - fade_min * a_max) / (fade_max - fade_min);
+    a = max(min(a, a_max), a_min);
+    color[0] = a;
+    color[1] = a;
+    color[2] = a;
+    if(color[0] > 0 || color[1] > 0 || color[2] > 0) pixels.setPixelColor(i, pixels.Color(color[0], color[1], color[2]));
+
   }
   pixels.show();   // Send the updated pixel colors to the hardware.
   last_time = time;
-  delay(1); // Pause before next pass through loop
+  delay(10); // Pause before next pass through loop
 }
 
 void initSimulation() {
   pos = (float)NUMPIXELS - body_size - 1;
   floor_pos = 0;
-  g = -9.8 * 10;
+  g = -9.8 * 30;
 }
 
 void simulate() {
@@ -64,6 +89,7 @@ void simulate() {
   float f = g;
   float r = body_size/2;
 
+  // 地面や天井に沈み込んだときの演算
   if (pos < r + floor_pos) {
     f += k * (r - (pos - floor_pos)) - c * v;
   } else if (pos > - r + ceil_pos) {
@@ -72,6 +98,7 @@ void simulate() {
 
   float a = equation_of_motion(1, f);
   v += a * delta_time;
+  v *= .99;  // 空気抵抗
   pos += v * delta_time;
 }
 
