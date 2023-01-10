@@ -77,8 +77,8 @@ void loop() {
       float pos = balls[j].pos;
       float dist = abs(pos - (float)i);
 
-      float fade_max = body_size/2;
-      float fade_min = body_size/2 + 2;
+      float fade_max = body_size / 2;
+      float fade_min = body_size / 2 + 1;
       float a_max = 1;
       float a_min = 0;
       float a = ((a_max - a_min) / (fade_max - fade_min)) * dist + (fade_max * a_min - fade_min * a_max) / (fade_max - fade_min);
@@ -131,7 +131,7 @@ void simulate() {
       f += k * (- r - (pos - ceil_pos)) - c * v;
     }
 
-    // 他のボールとぶつかった時のF
+    // 他のボールと重なっている時のF
     for(int j = 0; j < BALL_NUM; j++) {
       if(i == j) continue;
       Ball other = balls[j];
@@ -142,6 +142,7 @@ void simulate() {
       }
     }
 
+    // 運動方程式からaを求める
     float a = equation_of_motion(1, f);
     v += a * dt;
     v *= .99;  // 空気抵抗
