@@ -32,19 +32,13 @@ float floor_pos = 0;  // 床の位置
 float ceil_pos = NUMPIXELS;  // 天井の位置
 int bound_cnt = 0;  // バウンド回数
 
-float equation_of_motion(float m, float f){
-  return f / m;
-}
-
 void setup() {
 #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
   clock_prescale_set(clock_div_1);
 #endif
 
   Serial.begin(9600);
-
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-
   time = millis();
   initSimulation();
 }
@@ -52,7 +46,7 @@ void setup() {
 void loop() {
   pixels.clear(); // Set all pixel colors to 'off'
 
-  time = (float)millis() / 1000.;
+  time = (float)millis() / 1000;
 
   float seq_time = 15;  // シーケンス全体の時間
   // %使いたいがためにint化
@@ -142,8 +136,8 @@ void simulate() {
       }
     }
 
-    // 運動方程式からaを求める
-    float a = equation_of_motion(1, f);
+    // 運動方程式F=ma
+    float a = f / m;
     v += a * dt;
     v *= .99;  // 空気抵抗
     balls[i].v = v;
@@ -152,7 +146,11 @@ void simulate() {
     balls[i].pos += balls[i].v * dt;
   }
 }
- 
+
+// --------------------- 
+// Utility Methods -----
+// ---------------------
+
 float sign(float value) {
   if(value < 0) return -1;
   else return 1;
