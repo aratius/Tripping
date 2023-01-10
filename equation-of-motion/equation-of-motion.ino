@@ -15,7 +15,8 @@ struct Color {
 
 struct Ball {
   float v = 0;
-  float pos = 0;  
+  float pos = 0;
+  float m = 1;
 };
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
@@ -80,14 +81,14 @@ void loop() {
       float a_max = 255;
       float a_min = 0;
       float a = ((a_max - a_min) / (fade_max - fade_min)) * dist + (fade_max * a_min - fade_min * a_max) / (fade_max - fade_min);
-      a = max(min(a, a_max), a_min);
+      a = clamp(a, a_min, a_max);
       if(j % 3 == 0) color.r = a;      
       if(j % 3 == 1) color.g = a;      
       if(j % 3 == 2) color.b = a;      
     }
-    color.r = max(min(color.r, 255), 0);
-    color.g = max(min(color.g, 255), 0);
-    color.b = max(min(color.b, 255), 0);
+    color.r = clamp(color.r, 0, 255);
+    color.g = clamp(color.g, 0, 255);
+    color.b = clamp(color.b, 0, 255);
     if(color.r > 0 || color.g > 0 || color.b > 0) pixels.setPixelColor(i, pixels.Color(color.r, color.g, color.b));
 
   }
@@ -105,21 +106,23 @@ void initSimulation() {
 }
 
 void simulate() {
-  float delta_time = time - last_time;
+  float dt = time - last_time;
   for(int i = 0; i < BALL_NUM; i++) {
     Ball me = balls[i];
-    float f = g;
-    float r = body_size/2;
+    float m = me.m;
     float v = me.v;
     float pos = me.pos;
+    float f = m * g;  // F = ma
+    float r = body_size / 2;
 
-    // 地面や天井に沈み込んだときの演算
+    // 地面や天井に沈み込んだときのF
     if (pos < r + floor_pos) {
       f += k * (r - (pos - floor_pos)) - c * v;
     } else if (pos > - r + ceil_pos) {
       f += k * (- r - (pos - ceil_pos)) - c * v;
     }
 
+    // 他のボールとぶつかった時のF
     for(int j = 0; j < BALL_NUM; j++) {
       if(i == j) continue;
       Ball other = balls[j];
@@ -131,20 +134,20 @@ void simulate() {
     }
 
     float a = equation_of_motion(1, f);
-    v += a * delta_time;
+    v += a * dt;
     v *= .99;  // 空気抵抗
     balls[i].v = v;
   }
   for(int i = 0; i < BALL_NUM; i++) {
-    balls[i].pos += balls[i].v * delta_time;
+    balls[i].pos += balls[i].v * dt;
   }
-}
-
-void reverse() {
-  g *= -1;
 }
  
 float sign(float value) {
   if(value < 0) return -1;
   else return 1;
+}
+
+float clamp(float value, float minValue, float maxValue) {
+  return max(min(value, maxValue), minValue);
 }
