@@ -17,6 +17,7 @@ struct Ball {
   float v = 0;
   float pos = 0;
   float m = 1;
+  Color color = {0, 0, 0};
 };
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
@@ -78,13 +79,16 @@ void loop() {
 
       float fade_max = body_size/2;
       float fade_min = body_size/2 + 2;
-      float a_max = 255;
+      float a_max = 1;
       float a_min = 0;
       float a = ((a_max - a_min) / (fade_max - fade_min)) * dist + (fade_max * a_min - fade_min * a_max) / (fade_max - fade_min);
       a = clamp(a, a_min, a_max);
-      if(j % 3 == 0) color.r = a;      
-      if(j % 3 == 1) color.g = a;      
-      if(j % 3 == 2) color.b = a;      
+      if(a > 0) {
+        Color c = balls[j].color;
+        color.r += c.r * a;
+        color.g += c.g * a;
+        color.b += c.b * a;
+      }
     }
     color.r = clamp(color.r, 0, 255);
     color.g = clamp(color.g, 0, 255);
@@ -100,6 +104,11 @@ void initSimulation() {
   for(int i = 0; i < BALL_NUM; i++) {
     // ずらして並べる
     balls[i].pos = (float)NUMPIXELS - body_size * (float)(i + 1) * 3 - 1;
+    balls[i].color = {
+      (sin((float)(i + 1)) + 1) * .5 * 255,
+      (sin((float)(i + 2)) + 1) * .5 * 255,
+      (sin((float)(i + 3)) + 1) * .5 * 255
+    };
   }
   floor_pos = 0;
   g = -9.8 * 30;
