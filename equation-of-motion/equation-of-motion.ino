@@ -7,6 +7,12 @@
 #define NUMPIXELS 64 // Popular NeoPixel ring size
 #define BALL_NUM 3
 
+struct Color {
+  float r;
+  float g;
+  float b;
+};
+
 struct Ball {
   float v = 0;
   float pos = 0;  
@@ -64,7 +70,7 @@ void loop() {
   simulate();
 
   for(int i=0; i<NUMPIXELS; i++) { // For each pixel...
-    float color[3] = {0, 0, 0};
+    Color color = {0, 0, 0};
     for(int j = 0; j < BALL_NUM; j++) {
       float pos = balls[j].pos;
       float dist = abs(pos - (float)i);
@@ -75,21 +81,23 @@ void loop() {
       float a_min = 0;
       float a = ((a_max - a_min) / (fade_max - fade_min)) * dist + (fade_max * a_min - fade_min * a_max) / (fade_max - fade_min);
       a = max(min(a, a_max), a_min);
-      color[j % 3] += a;
+      if(j % 3 == 0) color.r = a;      
+      if(j % 3 == 1) color.g = a;      
+      if(j % 3 == 2) color.b = a;      
     }
-    color[0] = max(min(color[0], 255), 0);
-    color[1] = max(min(color[1], 255), 0);
-    color[2] = max(min(color[2], 255), 0);
-    if(color[0] > 0 || color[1] > 0 || color[2] > 0) pixels.setPixelColor(i, pixels.Color(color[0], color[1], color[2]));
+    color.r = max(min(color.r, 255), 0);
+    color.g = max(min(color.g, 255), 0);
+    color.b = max(min(color.b, 255), 0);
+    if(color.r > 0 || color.g > 0 || color.b > 0) pixels.setPixelColor(i, pixels.Color(color.r, color.g, color.b));
 
   }
   pixels.show();   // Send the updated pixel colors to the hardware.
   last_time = time;
-  delay(10); // Pause before next pass through loop
 }
 
 void initSimulation() {
   for(int i = 0; i < BALL_NUM; i++) {
+    // ずらして並べる
     balls[i].pos = (float)NUMPIXELS - body_size * (float)(i + 1) * 3 - 1;
   }
   floor_pos = 0;
