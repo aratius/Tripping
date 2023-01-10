@@ -8,16 +8,16 @@
 #define BALL_NUM 3
 
 struct Ball {
-  float v;
-  float pos;  
+  float v = 0;
+  float pos = 0;  
 };
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-float body_size = 3;  // 体の大きさ
+float body_size = 4;  // 体の大きさ
 float g = 0;  // 重力加速度
 float k = 1000;  // バネ定数
-float c = 10;
-struct Ball balls[BALL_NUM] = {{0, 0}, {0, 0}, {0, 0}};
+float c = 7;
+struct Ball balls[BALL_NUM];
 float time = 0;  // 時間
 float last_time = 0;  // 前回の時間
 float floor_pos = 0;  // 床の位置
