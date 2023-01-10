@@ -57,9 +57,13 @@ void loop() {
   } else if(long(time * 1000) % long(seq_time * 1000) < long(5.4 * 1000)) {
     g = -9.8 * 20;
   } else {
-    float pos = balls[0].pos;
-    float dist_from_center_nomralized = (pos - (ceil_pos / 2)) / (ceil_pos / 2);
-    g = 9.8 * 6 * -dist_from_center_nomralized;
+    float power = 0;
+    for(int j = 0; j < BALL_NUM; j++) {
+      float pos = balls[j].pos;
+      float dist_from_center_nomralized = (pos - (ceil_pos / 2)) / (ceil_pos / 2);
+      power += dist_from_center_nomralized;
+    }
+    g = 9.8 * 6 * -power;
     g += (sin(time * .9) + cos(time * .95)) * 9.8 * 2;  // 収束しないようにsinで適当に揺らし続ける
   }
 
