@@ -3,6 +3,7 @@
  #include <avr/power.h> // Required for 16 MHz Adafruit Trinket
 #endif
 
+#define PI 3.14159265
 #define PIN        3 // On Trinket or Gemma, suggest changing this to 1
 #define NUMPIXELS 64 // Popular NeoPixel ring size
 #define BALL_NUM 3
@@ -38,6 +39,7 @@ void setup() {
 #endif
 
   Serial.begin(9600);
+  randomSeed(analogRead(0));
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
   time = millis();
   initSimulation();
@@ -61,10 +63,10 @@ void loop() {
     for(int j = 0; j < BALL_NUM; j++) {
       float pos = balls[j].pos;
       float dist_from_center_nomralized = (pos - (ceil_pos / 2)) / (ceil_pos / 2);
-      power += dist_from_center_nomralized;
+      power += dist_from_center_nomralized * (sin((float)j + time) + 1) * .5;
     }
     g = 9.8 * 6 * -power;
-    g += (sin(time * .9) + cos(time * .95)) * 9.8 * 2;  // 収束しないようにsinで適当に揺らし続ける
+    g += (sin(time * .9) + cos(time * .95)) * 9.8 * 3;  // 収束しないようにsinで適当に揺らし続ける
   }
 
   simulate();
@@ -92,21 +94,17 @@ void loop() {
     color.g = clamp(color.g, 0, 255);
     color.b = clamp(color.b, 0, 255);
     if(color.r > 0 || color.g > 0 || color.b > 0) pixels.setPixelColor(i, pixels.Color(color.r, color.g, color.b));
-
   }
   pixels.show();   // Send the updated pixel colors to the hardware.
   last_time = time;
 }
 
 void initSimulation() {
+  float seed = (float)random(360) / 180 * (float)PI;
   for(int i = 0; i < BALL_NUM; i++) {
     // ずらして並べる
     balls[i].pos = (float)NUMPIXELS - body_size * (float)(i + 1) * 3 - 1;
-    balls[i].color = {
-      (sin((float)(i + 1)) + 1) * .5 * 255,
-      (sin((float)(i + 2)) + 1) * .5 * 255,
-      (sin((float)(i + 3)) + 1) * .5 * 255
-    };
+    balls[i].color = getRandomColor((float)i + seed);
   }
   floor_pos = 0;
   g = -9.8 * 30;
@@ -149,6 +147,14 @@ void simulate() {
   for(int i = 0; i < BALL_NUM; i++) {
     balls[i].pos += balls[i].v * dt;
   }
+}
+
+Color getRandomColor(float seed) {
+    return {
+      (sin(seed) + 1) * .5 * 255,
+      (sin(seed + .4) + 1) * .5 * 255,
+      (sin(seed + .8) + 1) * .5 * 255
+    };
 }
 
 // --------------------- 
